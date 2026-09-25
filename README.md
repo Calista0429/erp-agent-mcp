@@ -23,6 +23,71 @@ from the caller's role, and every write goes through *plan → human approval �
                                               RLS on every tenant table
 ```
 
+## Usage scenarios
+
+These are real runs, not mock-ups: Claude (`claude -p`) is connected to this MCP server with
+only the ERP tools enabled, and the terminals show real output from the approval CLI. The whole
+sequence ran against one freshly seeded database. Tool results are cut to their first
+lines to save space.
+
+| # | Scenario | Who | What it shows |
+|---|----------|-----|---------------|
+| [1](#1-sales-analysis) | Sales analysis | sales agent | business question → schema discovery → aggregate over ref paths, no SQL |
+| [2](#2-placing-an-order) | Placing an order | sales agent | stock-aware conversation, then `place_order` returns a dry-run diff |
+| [3](#3-human-approval) | Human approval | ops manager | review the diff; a sales rep can't approve; admin applies atomically |
+| [4](#4-guardrails) | Guardrails | sales / viewer agent | hidden `unit_cost`; a read-only agent has no write tools |
+| [5](#5-tenant-isolation) | Tenant isolation | another tenant's agent | different schema, and none of Acme's data is visible |
+| [6](#6-a-coding-agent-extends-the-erp) | Schema extension | Claude Code + sales agent | coding agent adds a model; business agent uses it right away |
+| [7](#7-audit-trail) | Audit trail | ops manager | every call, including denied and planned ones |
+
+### 1. Sales analysis
+A manager asks a plain business question. The agent reads the schema, finds the product, and
+aggregates order lines by `order_id.employee_id` over `order_id.order_date`. That is a one-hop
+join across models, expressed through whitelisted field paths.
+
+![Case 1: sales analysis](docs/cases/01-sales-analysis.png)
+
+### 2. Placing an order
+The customer asks for 50 units while only 39 are in stock. The agent checks first and asks what
+to do. After the user confirms 30 units, `place_order` computes price, total and stock movement
+**in code** and returns a plan with a reorder warning. Nothing is written yet.
+(The server also rejects an oversell on its own, even when an agent skips the check. `npm run demo` step 4 covers that.)
+
+![Case 2: placing an order](docs/cases/02-place-order.png)
+
+### 3. Human approval
+The ops manager reviews the exact diff. A human sales rep's token is refused. The admin's approval
+applies the stock update, the order and the order line in one transaction, with a version check.
+The agent then confirms the result through `get_action`.
+
+![Case 3: human approval](docs/cases/03-human-approval.png)
+
+### 4. Guardrails
+`unit_cost` is `readableBy("admin")`, so it is missing from the sales agent's schema, tool
+inputs and results, and the agent says it cannot compute margins. A `viewer` agent gets no write tools
+at all, so it cannot even create a plan.
+
+![Case 4: guardrails](docs/cases/04-guardrails.png)
+
+### 5. Tenant isolation
+The same kind of question from an agent in the `globex` tenant. Globex has its own schema
+(parts, no orders), and Postgres RLS hides every Acme row.
+
+![Case 5: tenant isolation](docs/cases/05-tenant-isolation.png)
+
+### 6. A coding agent extends the ERP
+Claude Code reads the existing models and writes `tenants/acme/models/warehouse.ts`. The runtime
+loads it, and the sales agent can immediately plan a `warehouse_create`, which still needs approval.
+(This file was removed again afterwards; `npm run demo` step 10 recreates it to test hot reload.)
+
+![Case 6: schema extension](docs/cases/06-schema-extension.png)
+
+### 7. Audit trail
+Every tool call by every principal in the tenant, including planned, denied and applied ones,
+with latency. Globex's calls from case 5 are absent because the audit log is tenant-scoped too.
+
+![Case 7: audit trail](docs/cases/07-audit-trail.png)
+
 ## Quick start
 
 ```bash
