@@ -10,6 +10,10 @@ import { decide } from "../runtime/execute.ts";
 import type { Plan } from "../runtime/plan.ts";
 
 const [cmd = "list", arg] = process.argv.slice(2);
+if (["show", "approve", "reject"].includes(cmd) && !/^[0-9a-f-]{36}$/.test(arg ?? "")) {
+  console.error(`usage: approve -- ${cmd} <action_id>`);
+  process.exit(2);
+}
 const principal = await resolvePrincipal(process.env.ERP_TOKEN ?? "");
 const ws = principal.workspace_id;
 const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
@@ -57,8 +61,6 @@ await withTenant(ws, async (tx) => {
     }
     case "approve":
     case "reject": {
-      const { rows } = await tx.query("select plan from pending_actions where id = $1", [arg]);
-      if (rows[0]) printPlan(rows[0].plan);
       const r = await decide(tx, principal, arg, cmd);
       console.log(r.status === "applied" ? green(`applied: ${JSON.stringify(r)}`) : "error" in r ? red(`${r.status}: ${r.error}`) : r.status);
       break;
