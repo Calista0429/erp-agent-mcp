@@ -4,24 +4,10 @@ A small MCP server that lets AI agents **read and operate** an ERP safely.
 Business models are defined as code; the agent's tools are generated from that schema and
 from the caller's role, and every write goes through *plan → human approval → atomic apply*.
 
-```
- tenants/acme/models/*.ts  ──(hot reload)──┐        Claude Code / Claude Desktop
- tenants/acme/commands/*.ts                │                 │  MCP (stdio)
-   (schema-as-code, edited by humans       ▼                 ▼
-    or a coding agent)              ┌──────────────── MCP server ─────────────────┐
-                                    │ token → principal (tenant, role, agent)      │
-                                    │ tools generated per role:                    │
-                                    │   read : <model>_list/_get/_aggregate        │
-                                    │   write: <model>_create/_update, commands    │
-                                    │          → returns a PLAN, never writes      │
-                                    │ every call → audit_log                       │
-                                    └───────────────┬──────────────────────────────┘
-                                                    │ erp_app role, set app.workspace_id per tx
-   human approver ── npm run approve ──► executor ──┤
-   (dry-run diff, version check, atomic apply)      ▼
-                                    Postgres: records (JSONB) · pending_actions · audit_log
-                                              RLS on every tenant table
-```
+![Architecture: agents call generated tools on the MCP server; reads go to Postgres under RLS, writes become plans that a human approves before the executor applies them](docs/architecture.png)
+
+<sub>Source: [docs/architecture.html](docs/architecture.html), drawn with the
+[architecture-diagram skill](https://github.com/Cocoon-AI/architecture-diagram-generator) (MIT). Open it in a browser to export PNG/PDF.</sub>
 
 ## Usage scenarios
 
