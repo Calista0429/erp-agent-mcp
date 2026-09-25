@@ -1,5 +1,5 @@
 {
-  "name": "tailor-agent-runtime",
+  "name": "erp-agent-mcp",
   "version": "1.0.0",
   "scripts": {
     "setup": "tsx src/cli/setup.ts",
