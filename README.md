@@ -1,3 +1,5 @@
+**English** | [日本語](README.ja.md)
+
 # Agent execution runtime for a headless ERP
 
 A small MCP server that lets AI agents **read and operate** an ERP safely.
