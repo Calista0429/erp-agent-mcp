@@ -2,7 +2,7 @@ services:
   postgres:
     image: postgres:17
     environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: erp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run `npm run init-env` to create .env}
+      POSTGRES_DB: ${PGDATABASE:-erp}
     ports:
-      - "55432:5432" # 55432 to avoid clashing with a local Postgres
+      - "${PGPORT:-55432}:5432" # 55432 to avoid clashing with a local Postgres

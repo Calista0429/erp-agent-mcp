@@ -6,7 +6,8 @@
     "mcp": "tsx src/mcp/server.ts",
     "approve": "tsx src/cli/approve.ts",
     "demo": "tsx scripts/demo.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "init-env": "tsx src/cli/init-env.ts"
   },
   "license": "ISC",
   "type": "module",

@@ -91,8 +91,9 @@ with latency. Globex's calls from case 5 are absent because the audit log is ten
 ## Quick start
 
 ```bash
-docker compose up -d
 npm install
+npm run init-env              # creates .env with random DB passwords (git-ignored)
+docker compose up -d          # Postgres on localhost:55432, reads .env
 npm run setup -- --reset      # schema + two tenants + Northwind-style demo data
 npm run demo                  # scripted end-to-end run of every scenario below, with assertions
 ```
@@ -159,6 +160,7 @@ src/mcp/tools.ts           tool generation per (schema, role) + audit wrapper
 src/mcp/server.ts          stdio entry, hot reload → tools/list_changed
 src/cli/approve.ts         approver console (list / show / approve / reject / audit)
 src/cli/setup.ts           migrate + seed
+src/env.ts                 DB settings from env / .env (no credentials in the repo)
 tenants/acme, tenants/globex   two tenants with different schemas
 scripts/demo.ts            end-to-end rehearsal via a real MCP client
 ```

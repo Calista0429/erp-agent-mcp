@@ -14,7 +14,7 @@ create extension if not exists pgcrypto;
 
 do $$ begin
   if not exists (select from pg_roles where rolname = 'erp_app') then
-    create role erp_app login password 'erp_app';
+    create role erp_app login; -- password is set by `npm run setup` from ERP_APP_PASSWORD
   end if;
 end $$;
 

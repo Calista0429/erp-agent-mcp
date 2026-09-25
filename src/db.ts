@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import pg from "pg";
+import { appDbConfig } from "./env.ts";
 
 export type Tx = pg.PoolClient;
 
@@ -15,10 +16,7 @@ export interface Principal {
 }
 
 // Connects as erp_app: not the table owner, not a superuser, so RLS always applies.
-export const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL ?? "postgres://erp_app:erp_app@localhost:55432/erp",
-  max: 5,
-});
+export const pool = new pg.Pool({ ...appDbConfig(), max: 5 });
 
 export const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
 

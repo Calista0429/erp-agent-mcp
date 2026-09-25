@@ -1,18 +1,23 @@
 // Creates the schema and seeds two tenants with demo data. Runs as a superuser/owner.
-//   npm run setup -- --reset      (ADMIN_DATABASE_URL defaults to the docker-compose Postgres)
+//   npm run setup -- --reset      (connection settings: see .env.example)
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import pg from "pg";
 import { hashToken } from "../db.ts";
+import { adminDbConfig } from "../env.ts";
 
-const db = new pg.Client({ connectionString: process.env.ADMIN_DATABASE_URL ?? "postgres://postgres:postgres@localhost:55432/erp" });
+const db = new pg.Client(adminDbConfig());
 await db.connect();
 
 if (process.argv.includes("--reset")) {
   await db.query("drop table if exists audit_log, pending_actions, records, principals, workspaces cascade");
 }
 await db.query(await readFile(join(import.meta.dirname, "../../db/001_init.sql"), "utf8"));
+// The runtime role's password comes from the environment, not from the SQL file.
+const appPassword = process.env.ERP_APP_PASSWORD ?? (process.env.DATABASE_URL && new URL(process.env.DATABASE_URL).password);
+if (!appPassword) throw new Error("ERP_APP_PASSWORD is not set. Run `npm run init-env` first.");
+await db.query(`alter role erp_app with login password ${db.escapeLiteral(appPassword)}`);
 
 // ---- Tenants & principals (demo tokens; real systems would issue random secrets) ----------
 await db.query("insert into workspaces (id, name) values ('acme', 'Acme Foods'), ('globex', 'Globex Machinery')");
