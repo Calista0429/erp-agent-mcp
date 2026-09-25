@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "erp-acme-sales": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp/server.ts"],
+      "env": { "ERP_TOKEN": "acme-sales-agent" }
+    },
+    "erp-acme-viewer": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp/server.ts"],
+      "env": { "ERP_TOKEN": "acme-viewer-agent" }
+    },
+    "erp-globex-sales": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp/server.ts"],
+      "env": { "ERP_TOKEN": "globex-sales-agent" }
+    }
+  }
+}
